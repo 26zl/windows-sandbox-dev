@@ -47,6 +47,10 @@ irm https://raw.githubusercontent.com/26zl/windows-sandbox-lab/main/install.ps1 
 start sandbox.wsb
 ```
 
+> The one-liner tracks `main` — read [`install.ps1`](install.ps1) first if you want to audit it.
+> Prefer a pinned version? Clone a release instead:
+> `git clone --depth 1 --branch v1.0.0 https://github.com/26zl/windows-sandbox-lab.git`
+
 **Or clone** (gives you profile selection):
 
 ```powershell
@@ -72,7 +76,7 @@ default is always included, and duplicates are de-duplicated automatically:
 
 | Profile | What you get |
 | --- | --- |
-| **default** | Go, Rust, Python 3.13, JDK 21, Node LTS, Ruby, PHP, Zig, .NET 9 SDK+runtime, VS Build Tools, CMake, Git, 7-Zip, Sysinternals, PowerShell 7, VS Code, Notepad++ |
+| **default** | Go, Rust, Python 3.13, JDK 21, Node LTS, Ruby, PHP, Zig, .NET 9 SDK+runtime, VS Build Tools, VC++ redistributables, CMake, Git, 7-Zip, Sysinternals, PowerShell 7, VS Code, Notepad++ |
 | **datascience** | Miniconda, uv, R, RStudio, VS Code (JupyterLab via `uv tool install`) |
 | **devops** | Terraform, kubectl, k9s, Helm, AWS/Azure/gcloud CLIs *(client-only — no local containers, see note)* |
 | **database** | DBeaver, PostgreSQL, SQLite, SQL Server 2022 Express, SSMS |
@@ -127,6 +131,8 @@ On by default so you can see what software does inside the sandbox:
 - PowerShell script-block + module logging
 - Process creation auditing with command-line capture
 - Telemetry and Windows Error Reporting disabled
+- Smart App Control (WDAC "verified and reputable" policy) is turned **off** inside the box to
+  speed up MSI installs — protection comes from disposability + logging, not SAC
 
 ## Environment tweaks
 
@@ -162,6 +168,7 @@ install.ps1           ← one-liner bootstrap (irm | iex)
 sandbox.wsb.template  ← sandbox config (networking/clipboard toggled for -Offline)
 scripts/autostart.ps1 ← runs inside the sandbox: env, hardening, winget installs, Sysmon (-Offline = no-network variant)
 scripts/launch.cmd    ← launcher (forwards -Offline to autostart.ps1)
+tests/setup.Tests.ps1 ← Pester tests for setup.ps1 (run in CI)
 ```
 
 Install log inside the sandbox: `%TEMP%\sandbox-install.log`

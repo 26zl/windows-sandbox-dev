@@ -48,6 +48,21 @@ jobs:
 
           Write-Host "No issues found." -ForegroundColor Green
 
+  pester:
+    name: Pester
+    runs-on: windows-latest
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - name: Run Pester tests
+        shell: pwsh
+        run: Invoke-Pester -Path tests -CI
+
   validate-json:
     name: Validate tools.json
     runs-on: ubuntu-latest

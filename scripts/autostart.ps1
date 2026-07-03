@@ -36,6 +36,13 @@ function Assert-ExitCode {
     }
 }
 
+# Pick up machine/user PATH changes made by installers in this session.
+function Sync-SessionPath {
+    $env:PATH = [System.Environment]::GetEnvironmentVariable("PATH", "Machine") + ";" +
+    [System.Environment]::GetEnvironmentVariable("PATH", "User") + ";" +
+    "$env:LOCALAPPDATA\Microsoft\WindowsApps"
+}
+
 # Wait for HTTPS connectivity before online setup.
 if ($Offline) {
     Write-SetupLog "INFO" "Offline mode - network and winget steps skipped"
@@ -170,13 +177,7 @@ if ($LASTEXITCODE -ne 0) { $regOk = $false }
 reg add "HKEY_CLASSES_ROOT\.txt\ShellNew" /v "ItemName" /t REG_SZ /d "New Text Document" /f | Out-Null
 if ($LASTEXITCODE -ne 0) { $regOk = $false }
 
-# New PowerShell Script in context menu
-reg add "HKEY_CLASSES_ROOT\.ps1" /ve /d "ps1file" /f | Out-Null
-if ($LASTEXITCODE -ne 0) { $regOk = $false }
-reg add "HKEY_CLASSES_ROOT\ps1file" /ve /d "PowerShell Script" /f | Out-Null
-if ($LASTEXITCODE -ne 0) { $regOk = $false }
-reg add "HKEY_CLASSES_ROOT\ps1file\DefaultIcon" /ve /d "%SystemRoot%\System32\imageres.dll,-5372" /f | Out-Null
-if ($LASTEXITCODE -ne 0) { $regOk = $false }
+# New PowerShell Script in context menu (keep the built-in Microsoft.PowerShellScript.1 association)
 reg add "HKEY_CLASSES_ROOT\.ps1\ShellNew" /f | Out-Null
 if ($LASTEXITCODE -ne 0) { $regOk = $false }
 cmd /c 'reg add "HKEY_CLASSES_ROOT\.ps1\ShellNew" /v "NullFile" /t REG_SZ /d "" /f' 2>&1 | Out-Null
@@ -283,9 +284,7 @@ if (-not $Offline) {
         Write-SetupLog "OK" "winget installed"
 
         # Refresh PATH so winget is available in this session
-        $env:PATH = [System.Environment]::GetEnvironmentVariable("PATH", "Machine") + ";" +
-        [System.Environment]::GetEnvironmentVariable("PATH", "User") + ";" +
-        "$env:LOCALAPPDATA\Microsoft\WindowsApps"
+        Sync-SessionPath
     }
     else {
         Write-SetupLog "OK" "winget already available"
@@ -373,9 +372,7 @@ Write-SetupLog "INFO" "=== Phase 4: Sysmon configuration ==="
 
 if (-not $Offline) {
     # Refresh PATH so winget-installed CLIs are on PATH in the kept-open window
-    $env:PATH = [System.Environment]::GetEnvironmentVariable("PATH", "Machine") + ";" +
-    [System.Environment]::GetEnvironmentVariable("PATH", "User") + ";" +
-    "$env:LOCALAPPDATA\Microsoft\WindowsApps"
+    Sync-SessionPath
 }
 
 $feature = Get-WindowsOptionalFeature -Online -FeatureName Sysmon -ErrorAction SilentlyContinue
